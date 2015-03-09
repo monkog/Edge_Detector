@@ -48,3 +48,5 @@ IN_OpenCV.opensdf
 *.dll
 *.lib
 *.user
+*.suo
+*.suo
