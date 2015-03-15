@@ -11,19 +11,42 @@ Mat src_blur;
 int lowT = 50;
 int sobol = 3;
 
+/// <summary>
+/// Calculates the lines.
+/// </summary>
+/// <param name="result">The result matrix with lines detected with Canny algorythm.</param>
 void calculateLines(Mat result)
 {
 	vector<Vec2f> lines;
 	Mat src_lines;
-	HoughLines(result, lines, 1, CV_PI / 180, 200);
+
+	//result - matrix to search for circles (grayscale)
+	//lines - out collection of found lines
+	//rho - The resolution of the parameter r in pixels. We use 1 pixel.
+	//theta - The resolution of the parameter theta in radians. We use 1 degree
+	//treshold - number of minimum intersections determining the line
+	HoughLines(result, lines, 1, CV_PI / 180, 200 - lowT);
 	cvtColor(result, src_lines, CV_GRAY2BGR);
 
 	for (size_t i = 0; i < lines.size(); i++)
 	{
+		//Hough Line transform returns Polar coordinates. 
+		//To display the lines on 2D picture, coordinates have to be converted do Cartesian coordinates.
+
+		//rho – Distance resolution of the accumulator in pixels.
+		//theta – Angle resolution of the accumulator in radians.
 		float rho = lines[i][0], theta = lines[i][1];
 		Point pt1, pt2;
+
+		//family of lines that goes through (x, y) is defined by:
+		//r = x * cos(theta) + y * sin(theta)
+		//meaning each pair (r, theta) represents each line that goes through (x, y)
+		//pairs for each point can be visualised as a sinusoide.
+		//intersecting sinusoids for different points determine the same line
 		double a = cos(theta), b = sin(theta);
 		double x0 = a*rho, y0 = b*rho;
+
+		//Calculat start and end points which are set to fixed position -1000 and +1000 pixels from the converted point
 		pt1.x = cvRound(x0 + 1000 * (-b));
 		pt1.y = cvRound(y0 + 1000 * (a));
 		pt2.x = cvRound(x0 - 1000 * (-b));
@@ -32,25 +55,42 @@ void calculateLines(Mat result)
 	}
 	imshow("detected lines", src_lines);
 }
-
+/// <summary>
+/// Calculates the circles.
+/// </summary>
+/// <param name="result">The result matrix with lines detected with Canny algorythm.</param>
 void calculateCircles(Mat result)
 {
 	vector<Vec3f> circles; 
 	Mat src_circles;
-	cout << "ROWS:" << result.rows << "/ROWS";
-	HoughCircles(result, circles, CV_HOUGH_GRADIENT, 1, result.rows / 8);
+	//result - matrix to find the circles on (grayscale)
+	//circles - out vector of the (x, y, r) of found circles
+	//method - method to find the circles - CV_HOUGH_GRADIENT - currently this is the only one available in OpenCV
+	//dp - The inverse ratio of resolution
+	//minDist - Minimum distance between detected centers
+	//param1 - Upper threshold for the internal Canny edge detector
+	//param2 - Threshold for center detection.
+	//minRadius - Minimum radio to be detected.If unknown, put zero as default.
+	//maxRadius - Maximum radius to be detected.If unknown, put zero as default
+	HoughCircles(result, circles, CV_HOUGH_GRADIENT, 1, 1, 100, 30, 1, 30);
 	cvtColor(result, src_circles, CV_GRAY2BGR);
 
-	for (size_t i = 0; i < circles.size(); i++) 
-	{ 
-		Point center(cvRound(circles[i][0]), cvRound(circles[i][1])); 
-		int radius = cvRound(circles[i][2]); 
-		circle(src_circles, center, 3, Scalar(0, 255, 0), -1, 8, 0);
-		circle(src_circles, center, radius, Scalar(0, 0, 255), 3, 8, 0);
-	} 
+	for (size_t i = 0; i < circles.size(); i++)
+	{
+		Vec3i c = circles[i];
+		// circle outline
+		circle(src_circles, Point(c[0], c[1]), c[2], Scalar(0, 0, 255), 1, CV_AA);
+		// circle center
+		circle(src_circles, Point(c[0], c[1]), 2, Scalar(0, 255, 0), 1, CV_AA);
+	}
+
 	imshow("detected circles", src_circles);
 }
-
+/// <summary>
+/// Calculates the result matrix with lines detected with Canny algorythm.
+/// </summary>
+/// <param name="treshold">The treshold.</param>
+/// <param name="sobol">The sobol parameter.</param>
 void calculateResultMatrix(int treshold, int sobol)
 {
 	Mat result;
@@ -60,13 +100,21 @@ void calculateResultMatrix(int treshold, int sobol)
 	calculateLines(result);
 	calculateCircles(result);
 }
-
+/// <summary>
+/// Changes the treshold and recalculates the result matrix.
+/// </summary>
+/// <param name="newValue">The new value.</param>
+/// <param name="object">The optional parameter.</param>
 void changeTreshold(int newValue, void * object)
 {
 	lowT = newValue + 50;
 	calculateResultMatrix(lowT, sobol);
 }
-
+/// <summary>
+/// Changes the sobol parameter.
+/// </summary>
+/// <param name="newValue">The new value.</param>
+/// <param name="object">The optional parameter.</param>
 void changeSobol(int newValue, void * object)
 {
 	switch (newValue)
