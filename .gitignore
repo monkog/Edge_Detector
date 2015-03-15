@@ -43,6 +43,7 @@ Temporary Items
 .apdisk
 
 Debug/
+Release/
 *.sdf
 IN_OpenCV.opensdf
 *.dll
@@ -50,3 +51,4 @@ IN_OpenCV.opensdf
 *.user
 *.suo
 *.suo
+*.xml
