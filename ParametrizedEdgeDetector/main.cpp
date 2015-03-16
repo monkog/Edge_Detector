@@ -9,7 +9,8 @@ using namespace std;
 const string IMAGE = "building.jpg";
 Mat src_blur;
 int lowT = 50;
-int sobol = 3;
+int sobel = 3;
+int cornerT = 100;
 
 /// <summary>
 /// Calculates the lines.
@@ -87,6 +88,42 @@ void calculateCircles(Mat result)
 	imshow("detected circles", src_circles);
 }
 /// <summary>
+/// Detects the corners using Harris algorythm.
+/// </summary>
+/// <param name="source">Source matrix.</param>
+void detectCorners(Mat source)
+{
+	Mat result(source.rows, source.cols, CV_32FC1);
+	Mat result_norm;
+	//result - float matrix one canal
+	//ksize - sobel size
+	cornerHarris(source, result, 2, sobel, 0.04);
+	normalize(result, result_norm, 0, 255, NORM_MINMAX);
+	convertScaleAbs(result_norm, result);
+
+	/*
+	for (int i = 0; i < result.cols; i++)
+	{
+		for (int j = 0; j < result.rows; j++)
+		{
+			if(result.at<uchar>(j, i) > cornerT)
+				circle(result, Point(j, i), 5, Scalar(0, 0, 255), 1, CV_AA);
+		}
+	}*/
+
+	vector<Point2f> corners;
+
+	goodFeaturesToTrack(source, corners, cornerT, 0.01, 10, Mat(), 3, false, 0.04);
+	
+	for (size_t i = 0; i < corners.size(); i++)
+	{
+		Point2f c = corners[i];
+		circle(result, Point(c.x, c.y), 5, Scalar(0, 0, 255), 1, CV_AA);
+	}
+
+	imshow("detected corners", result);
+}
+/// <summary>
 /// Calculates the result matrix with lines detected with Canny algorythm.
 /// </summary>
 /// <param name="treshold">The treshold.</param>
@@ -99,6 +136,7 @@ void calculateResultMatrix(int treshold, int sobol)
 	imshow("Parametrized edge detector", result);
 	calculateLines(result);
 	calculateCircles(result);
+	detectCorners(result);
 }
 /// <summary>
 /// Changes the treshold and recalculates the result matrix.
@@ -108,25 +146,31 @@ void calculateResultMatrix(int treshold, int sobol)
 void changeTreshold(int newValue, void * object)
 {
 	lowT = newValue + 50;
-	calculateResultMatrix(lowT, sobol);
+	calculateResultMatrix(lowT, sobel);
+}
+
+void cornerTreshold(int newValue, void * object)
+{
+	cornerT = newValue;
+	calculateResultMatrix(lowT, sobel);
 }
 /// <summary>
-/// Changes the sobol parameter.
+/// Changes the sobel parameter.
 /// </summary>
 /// <param name="newValue">The new value.</param>
 /// <param name="object">The optional parameter.</param>
-void changeSobol(int newValue, void * object)
+void changeSobel(int newValue, void * object)
 {
 	switch (newValue)
 	{
 	case 0:
-		sobol = CV_SCHARR;
+		sobel = CV_SCHARR;
 		break;
 	default:
-		sobol = newValue * 2 + 1;
+		sobel = newValue * 2 + 1;
 		break;
 	}
-	calculateResultMatrix(lowT, sobol);
+	calculateResultMatrix(lowT, sobel);
 }
 
 int main(int argc, char* argv[])
@@ -144,14 +188,19 @@ int main(int argc, char* argv[])
 	Canny(src_blur, result, 150, 3 * 150, 3, true);
 
 	namedWindow("Parametrized edge detector", WINDOW_AUTOSIZE);
-	createTrackbar("sobol", "Parametrized edge detector", &sobol, 3, &changeSobol);
+	createTrackbar("sobol", "Parametrized edge detector", &sobel, 3, &changeSobel);
 	createTrackbar("low treshold", "Parametrized edge detector", &lowT, 100, &changeTreshold);
+	createTrackbar("corners", "Parametrized edge detector", &cornerT, 200, &cornerTreshold);
 
 	imshow("Parametrized edge detector", result);
+
 	namedWindow("detected lines", CV_WINDOW_AUTOSIZE);
 	namedWindow("detected circles", CV_WINDOW_AUTOSIZE);
+	namedWindow("detected corners", CV_WINDOW_AUTOSIZE);
+
 	calculateLines(result);
 	calculateCircles(result);
+	detectCorners(result);
 
 	waitKey(0); // Wait for a keystroke in the window
 	return 0;
