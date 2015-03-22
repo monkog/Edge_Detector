@@ -14,27 +14,23 @@
 using namespace std;
 using namespace cv;
 
-void CannyDemo::updateThreshold(int value, void* instance)
-{
-	reinterpret_cast<CannyDemo*>(instance)->updateThreshold(value);
-}
-
-CannyDemo::CannyDemo(string img, Mat video, string srcWnd, string dstWnd)
-: image(img), srcWindow(srcWnd), dstWindow(dstWnd), threshold(200 - minThreshold), scene(video)
+CannyDemo::CannyDemo(string img, string srcWnd, string dstWnd)
+: image(img), srcWindow(srcWnd), dstWindow(dstWnd), threshold(200 - minThreshold)
 { }
 
-void CannyDemo::Run()
+void CannyDemo::Run(cv::Mat video)
 {
 	object_color = imread(image, IMREAD_COLOR);
 
-	if (!object_color.data || !scene.data)
+	if (!object_color.data || !video.data)
 	{
 		std::cout << "Error reading images " << std::endl; 
 		return;
 	}
 
-	Mat object;
+	Mat object, scene;
 	cvtColor(object_color, object, CV_BGR2GRAY);
+	cvtColor(video, scene, CV_BGR2GRAY);
 	
 	// Detect the keypoints using SURF Detector
 	int minHessian = 400;
@@ -57,8 +53,8 @@ void CannyDemo::Run()
 	matcher.match(objectDesc, sceneDesc, matches);
 
 	// calculation of max and min distances between keypoints
-	int min_dist = DBL_MAX;
-	int max_dist = 0;
+	double min_dist = DBL_MAX;
+	double max_dist = 0;
 
 	for (int i = 0; i < objectDesc.rows; i++)
 	{
@@ -67,15 +63,12 @@ void CannyDemo::Run()
 		if (dist > max_dist) max_dist = dist;
 	}
 
-	printf("Max dist : %f \n", max_dist);
-	printf("Min dist : %f \n", min_dist);
-
 	// Draw only good matches, whose distance is less than 3 * min_dist 
 	vector<DMatch> good_matches;
 
 	for (int i = 0; i < objectDesc.rows; i++)
 	{
-		if (matches[i].distance <= min_dist * 3)
+		if (matches[i].distance <= max(min_dist * 2.0, 0.2))
 			good_matches.push_back(matches[i]);
 	}
 
@@ -115,17 +108,4 @@ void CannyDemo::Run()
 
 	// Show detected matches
 	imshow("Good Matches", img_matches);
-
-	updateThreshold(threshold);
-}
-
-void CannyDemo::updateThreshold(int value)
-{
-	Mat dst;
-	int lowT = value + minThreshold;
-	int highT = lowT * 3;
-	Canny(object_blur, dst, lowT, highT, CV_SCHARR, true);
-
-	//namedWindow(dstWindow, WINDOW_AUTOSIZE);
-	//imshow(dstWindow, dst);
 }

@@ -25,10 +25,8 @@ int main()
 
 		try
 		{
-			Mat frame_gray;
-			cvtColor(frame, frame_gray, CV_BGR2GRAY);
-			CannyDemo demo("black-on-white-on-black.jpg", frame_gray, "Original", "Result");
-			demo.Run();
+			CannyDemo demo("black-on-white-on-black.jpg", "Original", "Result");
+			demo.Run(frame);
 		}
 		catch (Exception& e)
 		{
