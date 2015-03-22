@@ -101,16 +101,6 @@ void detectCorners(Mat source)
 	normalize(result, result_norm, 0, 255, NORM_MINMAX);
 	convertScaleAbs(result_norm, result);
 
-	/*
-	for (int i = 0; i < result.cols; i++)
-	{
-		for (int j = 0; j < result.rows; j++)
-		{
-			if(result.at<uchar>(j, i) > cornerT)
-				circle(result, Point(j, i), 5, Scalar(0, 0, 255), 1, CV_AA);
-		}
-	}*/
-
 	vector<Point2f> corners;
 
 	goodFeaturesToTrack(source, corners, cornerT, 0.01, 10, Mat(), 3, false, 0.04);

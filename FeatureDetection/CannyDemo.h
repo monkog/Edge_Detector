@@ -9,7 +9,7 @@ private:
 	std::string image;
 	std::string srcWindow;
 	std::string dstWindow;
-	cv::Mat src, src_blur;
+	cv::Mat object_color, object_blur, scene;
 	int threshold;
 	static const int minThreshold = 150;
 	static const int maxThreshold = 250;
@@ -19,6 +19,6 @@ private:
 	void updateThreshold(int);
 
 public:
-	CannyDemo(std::string image, std::string srcWindow, std::string dstWindow);
+	CannyDemo(std::string image, cv::Mat video, std::string srcWindow, std::string dstWindow);
 	void Run();
 };
