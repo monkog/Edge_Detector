@@ -45,6 +45,7 @@ Temporary Items
 Debug/
 Release/
 include/
+obrazki/
 *.sdf
 IN_OpenCV.opensdf
 *.dll
@@ -53,3 +54,4 @@ IN_OpenCV.opensdf
 *.suo
 *.suo
 *.xml
+*.jpg
